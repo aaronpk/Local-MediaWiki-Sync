@@ -1,4 +1,6 @@
 <?php
+chdir(dirname(__FILE__));
+
 include('config.php');
 include('include.php');
 
