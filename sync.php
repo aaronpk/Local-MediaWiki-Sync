@@ -14,8 +14,9 @@ $db = new WikiSyncDB();
 
 
 foreach($config as $wikiDomain=>$wikiConfig) {
+  $mw = logInToMediaWiki($wikiDomain);
   
-  $feed = file_get_contents($wikiConfig['root'] . '?title=Special:RecentChanges&feed=atom');
+  $feed = $mw->getRecentChanges();
   $xml = simplexml_load_string($feed);
   
   foreach($xml->entry as $entry) {
@@ -43,7 +44,7 @@ foreach($config as $wikiDomain=>$wikiConfig) {
             echo "\tFile not found on disk\n";
           echo "\twriting new file\n";
           echo "\n";
-          $source = file_get_contents($wikiConfig['root'] . '?oldid=' . $oldid . '&action=raw');
+          $source = $mw->getPage($oldid);
           file_put_contents($filename, $source);
           touch($filename, strtotime($entry->updated), strtotime($entry->updated));
         }

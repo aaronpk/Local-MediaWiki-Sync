@@ -20,7 +20,7 @@ foreach($config as $domain=>$c) {
     $filename = $dropboxPath . $domain . ' -- ' . pageTitleToFilename($page->title) . '.txt';
     echo $filename . "\n";
     
-    $wikitext = file_get_contents($c['root'] . '?oldid=' . $info->lastrevid . '&action=raw');
+    $wikitext = $mw->getPage($info->lastrevid);
     file_put_contents($filename, $wikitext);
     touch($filename, strtotime($info->touched), strtotime($info->touched));
     $db->set($domain, $page->title . ' WikiUpdated', strtotime($info->touched));
@@ -28,7 +28,7 @@ foreach($config as $domain=>$c) {
     $i++;
     if($i % 10 == 0)
       $db->write();
-  }
+  }  
 }
 
 $db->write();

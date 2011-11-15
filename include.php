@@ -7,7 +7,7 @@ function logInToMediaWiki($domain) {
     return $config[$domain]['client'];
 
   $c = $config[$domain];  
-  $config[$domain]['client'] = new MWClient($c['api'], $c['username'], $c['password']);
+  $config[$domain]['client'] = new MWClient($c['api'], $c['username'], $c['password'], $c);
   return $config[$domain]['client'];
 }
 
@@ -22,17 +22,18 @@ function filenameToPageTitle($name) {
 
 
 class MWClient {
-  private $_cookie = FALSE;
   private $_api;
+  private $_config;
 
-  public function __construct($api, $username, $password) {
+  public function __construct($api, $username, $password, $config) {
     $this->_api = $api;
+    $this->_config = $config;
     $login = $this->request('login', array(
       'lgname' => $username,
       'lgpassword' => $password
     ));
 
-    if($login && property_exists($login->login, 'token')) {
+    if($login && $login->login->result == 'NeedToken' && property_exists($login->login, 'token')) {
       $token = $login->login->token;
       $login = $this->request('login', array(
         'lgname' => $username,
@@ -44,16 +45,19 @@ class MWClient {
         echo "[$api] Logged in as: " . $login->login->lgusername . "\n";
         return TRUE;
       } else {
-        throw new Exception('MediaWiki Login failure after second attempt: $api');
+        throw new Exception('MediaWiki Login failure after second attempt: ' . json_encode($login));
       }
     } else {
-      throw new Exception('MediaWiki Login failure: $api');
+      throw new Exception('MediaWiki Login failure: ' . json_encode($login));
     }
   }
   
   public function request($action, $params=FALSE) {
     $ch = curl_init();
-    
+    $cwd = dirname(__FILE__);
+    curl_setopt($ch, CURLOPT_COOKIEFILE, $cwd . '/cookies.txt');
+    curl_setopt($ch, CURLOPT_COOKIEJAR, $cwd . '/cookies.txt');
+
     if(is_array($params)) {
       curl_setopt($ch, CURLOPT_URL, $this->_api);
       curl_setopt($ch, CURLOPT_POST, TRUE);
@@ -69,19 +73,40 @@ class MWClient {
       curl_setopt($ch, CURLOPT_URL, $this->_api . '?' . http_build_query($params));
     }
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    curl_setopt($ch, CURLOPT_HEADER, TRUE);
-    
-    if($this->_cookie) {
-      curl_setopt($ch, CURLOPT_HTTPHEADER, array('Cookie: ' . $this->_cookie));
-    }
-    
-    $json = curl_exec($ch);
 
-    list($headers, $json) = explode("\r\n\r\n", $json);
-    if(preg_match('/Set-Cookie: (cyborg_wiki_session=[^;]+)/i', $headers, $match)) {
-      $this->_cookie = $match[1];
-    }
+    $this->_addAuth($ch);
+
+    $json = curl_exec($ch);
     return json_decode($json);
+  }
+
+  public function getPage($revID) {
+    $ch = curl_init();
+    $cwd = dirname(__FILE__);
+    curl_setopt($ch, CURLOPT_COOKIEFILE, $cwd . '/cookies.txt');
+    curl_setopt($ch, CURLOPT_COOKIEJAR, $cwd . '/cookies.txt');
+    curl_setopt($ch, CURLOPT_URL, $this->_config['root'] . '?oldid=' . $revID . '&action=raw');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    $this->_addAuth($ch);
+    return curl_exec($ch);
+  }
+  
+  public function getRecentChanges() {
+    $ch = curl_init();
+    $cwd = dirname(__FILE__);
+    curl_setopt($ch, CURLOPT_COOKIEFILE, $cwd . '/cookies.txt');
+    curl_setopt($ch, CURLOPT_COOKIEJAR, $cwd . '/cookies.txt');
+    curl_setopt($ch, CURLOPT_URL, $this->_config['root'] . '?title=Special:RecentChanges&feed=atom');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    $this->_addAuth($ch);
+    return curl_exec($ch);
+  }
+  
+  private function _addAuth(&$ch) {
+    if(array_key_exists('login', $this->_config) && $this->_config['login'] == 'digestauth') {
+      curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
+      curl_setopt($ch, CURLOPT_USERPWD, $this->_config['username'].':'.$this->_config['password']);
+    }
   }
   
   public function editPage($pageTitle, $text) {
