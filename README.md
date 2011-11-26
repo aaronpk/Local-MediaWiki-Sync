@@ -33,12 +33,12 @@ Overview
 ========
 
 The ideal setup is this:
- * You use Notational Velocity to edit the files on your local computer
- * NV saves its files to a folder that is managed by Dropbox
- * Dropbox will upload changes, which will be received by a Linux client on a server somewhere
- * The Linux server will run this script, making changes to the wiki content
- * If the wiki is updated, the Linux client will download changes into its Dropbox folder, which
-   will be synced back to your local machine via Dropbox
+
+* You use Notational Velocity to edit the files on your local computer
+* Notational Velocity saves its files to a folder that is managed by Dropbox
+* Dropbox will upload changes, which will be received by a Linux client on a server somewhere
+* The Linux server will run this script, making changes to the wiki content
+* If the wiki is updated, the Linux client will download changes into its Dropbox folder, which will be synced back to your local machine via Dropbox
 
 
 Setup
@@ -63,8 +63,10 @@ path to the base URL where you'd like the files to be saved.
 When you run import.php, the script will crawl all wikis defined in the config file and get the list
 of all pages in the wiki. They will be downloaded into the dropbox folder you previously defined.
 The naming convention for files is:
-  
-  wiki.example.com -- Page Title.txt
+
+```
+wiki.example.com -- Page Title.txt
+```
 
 Any special characters will be URL-encoded so they don't conflict with the filesystem's conventions,
 with the exception of slashes which are converted to a double-hyphen (--).
@@ -72,7 +74,9 @@ with the exception of slashes which are converted to a double-hyphen (--).
 Next, set up the sync.php script to run as a cron job every 1-5 minutes. You can do this by adding
 something like this to your crontab file:
 
-  * * * * * /usr/bin/php /path/to/sync.php >> /var/log/mediawiki-sync.log 2>&1
+```
+* * * * * /usr/bin/php /path/to/sync.php >> /var/log/mediawiki-sync.log 2>&1
+```
 
 The script will begin looking for changes to the remote wiki and will update the local files accordingly.
 When the local files are modified, the script will attempt to update the remote MediaWiki pages
