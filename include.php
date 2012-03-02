@@ -109,6 +109,41 @@ class MWClient {
     }
   }
   
+  public function uploadFile($name, $filename) {
+    $response = $this->request('query', array('titles'=>$name, 'prop'=>'info', 'intoken'=>'edit'));
+
+    if($response && property_exists($response->query, 'pages')) {
+      
+      $pages = $response->query->pages;
+      $page = get_object_vars($pages);
+      $page = array_pop($page);
+      $token = $page->edittoken;
+
+      $ch = curl_init();
+      $cwd = dirname(__FILE__);
+      curl_setopt($ch, CURLOPT_COOKIEFILE, $cwd . '/cookies.txt');
+      curl_setopt($ch, CURLOPT_COOKIEJAR, $cwd . '/cookies.txt');
+  
+      curl_setopt($ch, CURLOPT_URL, $this->_api);
+      curl_setopt($ch, CURLOPT_POST, TRUE);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+        'action' => 'upload',
+        'format' => 'json',
+        'filename' => $name,
+        'file' => '@' . $filename,
+        'ignorewarnings' => 1,
+        'token' => $token
+      ));
+  
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+  
+      $this->_addAuth($ch);
+  
+      $json = curl_exec($ch);
+      return json_decode($json);
+    }
+  }
+  
   public function editPage($pageTitle, $text) {
     $response = $this->request('query', array('titles'=>$pageTitle, 'prop'=>'info', 'intoken'=>'edit'));
     print_r($response);
@@ -150,6 +185,10 @@ class WikiSyncDB {
       file_put_contents($this->_filename, '{}');
     } else {
       $this->_data = json_decode(file_get_contents($this->_filename));
+      if($this->_data == FALSE) {
+        echo "ERROR READING WIKI SYNC STATE\n";
+        die();
+      }
     }
   }
   

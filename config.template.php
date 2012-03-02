@@ -2,6 +2,7 @@
 
 $config = array();
 $dropboxPath = '/Users/aaronpk/Dropbox/NotationalVelocity/';
+$uploadPath = '/Users/aaronpk/Dropbox/Wiki/'; # Files go in $uploadPath / example.com /
 
 $config['example.com'] = array(
   'username' => 'user',

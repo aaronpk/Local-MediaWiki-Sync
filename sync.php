@@ -27,6 +27,11 @@ foreach($config as $wikiDomain=>$wikiConfig) {
         
         $filename = $dropboxPath . $wikiDomain . ' -- ' . pageTitleToFilename($title) . '.txt';
         
+        if(preg_match('/^File:/', $title)) {
+          echo "$title is a file, skipping…\n";
+          continue;
+        }
+        
         # If the remote wiki article was updated after the last date we downloaded the article
         if(strtotime($entry->updated) > $db->get($wikiDomain, $title . ' WikiUpdated')
           # and if the remote wiki article was updated after our local file was modified
@@ -71,13 +76,14 @@ foreach($files as $f) {
     if(array_key_exists($domain, $config)) {
 
       # If the local file was modified after the last wiki update, upload the new page contents
-      if(filemtime($filename) > $db->get($domain, $title . ' WikiUpdated')) {
+      $synctime = $db->get($domain, $title . ' WikiUpdated');
+      if(filemtime($filename) > $synctime) {
         $mw = logInToMediaWiki($domain);
         
         echo $f . "\n";
         echo "\t" . $title . "\n";
         echo "\tFile updated: " . date('Y-m-d H:i:s', filemtime($filename)) . "\n";
-        echo "\tWiki updated: " . date('Y-m-d H:i:s', $db->get($domain, $title . ' WikiUpdated')) . "\n";
+        echo "\tWiki updated: " . date('Y-m-d H:i:s', $synctime) . "\n";
         echo "\tUploading new article content...";
         
         $mw->editPage($title, file_get_contents($filename));
