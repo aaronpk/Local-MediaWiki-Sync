@@ -21,6 +21,12 @@ foreach($config as $domain=>$c) {
     echo $filename . "\n";
     
     $wikitext = $mw->getPage($info->lastrevid);
+    
+    if(preg_match('/#REDIRECT \[\[.+\]\]/', $wikitext)) {
+      echo "\tRedirect, skipping!\n";
+      continue;
+    }
+    
     file_put_contents($filename, $wikitext);
     touch($filename, strtotime($info->touched), strtotime($info->touched));
     $db->set($domain, $page->title . ' WikiUpdated', strtotime($info->touched));

@@ -91,6 +91,40 @@ class MWClient {
     return curl_exec($ch);
   }
   
+  public function getPageByTitle($title) {
+    $ch = curl_init();
+    $cwd = dirname(__FILE__);
+    curl_setopt($ch, CURLOPT_COOKIEFILE, $cwd . '/cookies.txt');
+    curl_setopt($ch, CURLOPT_COOKIEJAR, $cwd . '/cookies.txt');
+    curl_setopt($ch, CURLOPT_URL, $this->_config['root'] . '?title=' . $title . '&action=raw');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    $this->_addAuth($ch);
+    return curl_exec($ch);
+  }
+
+  public function getPageStatusByTitle($title) {
+    $ch = curl_init();
+    $cwd = dirname(__FILE__);
+    curl_setopt($ch, CURLOPT_COOKIEFILE, $cwd . '/cookies.txt');
+    curl_setopt($ch, CURLOPT_COOKIEJAR, $cwd . '/cookies.txt');
+    curl_setopt($ch, CURLOPT_URL, $this->_config['root'] . '?title=' . $title . '&action=raw');
+    curl_setopt($ch, CURLOPT_HEADER, TRUE);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    $this->_addAuth($ch);
+    $content = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if($code == 404) {
+      return 404;
+    }
+
+    if(preg_match('/#REDIRECT \[\[(.+)\]\]/', $content, $match)) {
+      return $match[1];
+    }
+    
+    return $code;
+  }
+  
   public function getRecentChanges() {
     $ch = curl_init();
     $cwd = dirname(__FILE__);

@@ -21,17 +21,17 @@ foreach($config as $wikiDomain=>$wikiConfig) {
   
   foreach($xml->entry as $entry) {
     if(preg_match('/--changed-in-dropbox--/', (string)$entry->summary) == FALSE) {
+      $title = $entry->title;
+      $filename = $dropboxPath . $wikiDomain . ' -- ' . pageTitleToFilename($title) . '.txt';
+
       if(preg_match('/diff=(\d+)/', $entry->id, $match)) {
         $oldid = $match[1];
-        $title = $entry->title;
-        
-        $filename = $dropboxPath . $wikiDomain . ' -- ' . pageTitleToFilename($title) . '.txt';
         
         if(preg_match('/^File:/', $title)) {
           echo "$title is a file, skipping…\n";
           continue;
         }
-        
+
         # If the remote wiki article was updated after the last date we downloaded the article
         if(strtotime($entry->updated) > $db->get($wikiDomain, $title . ' WikiUpdated')
           # and if the remote wiki article was updated after our local file was modified
@@ -52,11 +52,42 @@ foreach($config as $wikiDomain=>$wikiConfig) {
           $source = $mw->getPage($oldid);
           file_put_contents($filename, $source);
           touch($filename, strtotime($entry->updated), strtotime($entry->updated));
+        } // if remote article updated
+      } // if there is a diff id
+      else {
+        // No diff ID, possibly the page was deleted
+        $status = $mw->getPageStatusByTitle($title);
+        if($status == 404) {
+          echo $title . "\n";
+          echo "\tDeleting: " . $filename . "\n";
+          @unlink($filename);
+        } elseif(is_numeric($status)) {
+          echo "\tUnknown: " . $entry->id . "\n";
+        } else {
+          // Old page:
+          echo "Renaming [[$title]] to [[$status]]\n";
+          echo "\tDeleting old page: $filename\n";
+          @unlink($filename);
+        
+          $title = $status;
+          $filename = $dropboxPath . $wikiDomain . ' -- ' . pageTitleToFilename($title) . '.txt';
+          $db->set($wikiDomain, $title . ' WikiUpdated', strtotime($entry->updated));
+          echo "\t" . $filename . "\n";
+          echo "\tWiki page updated: " . date('Y-m-d H:i:s', strtotime($entry->updated)) . "\n";
+          if(file_exists($filename))
+            echo "\tFile updated: " . date('Y-m-d H:i:s', filemtime($filename)) . "\n";
+          else
+            echo "\tFile not found on disk\n";
+          echo "\twriting new file\n";
+          echo "\n";
+          $source = $mw->getPageByTitle($title);
+          file_put_contents($filename, $source);
+          touch($filename, strtotime($entry->updated), strtotime($entry->updated));
         }
       }
-    }
-  }
-}
+    } // if not changed in dropbox
+  } // foreach entry
+} // foreach wiki
 
 /*
   From Dropbox:
