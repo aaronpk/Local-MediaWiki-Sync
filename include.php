@@ -11,8 +11,14 @@ function logInToMediaWiki($domain) {
   return $config[$domain]['client'];
 }
 
-function pageTitleToFilename($title) {
-  return str_replace('+',' ',urlencode(str_replace(array('_','/'), array(' ','--'), $title)));
+function pageTitleToFilename($title, $namespace=false) {
+  if(substr($title, -1) == '/')
+    $title .= 'index';
+  $name = str_replace(array('+','%2F'),array(' ','/'), urlencode(str_replace(array('_'), array(' '), $title)));
+  if($namespace) {
+	  $name = str_replace($namespace.'%3A', $namespace.'/', $name);
+  }
+  return $name;
 }
 
 function filenameToPageTitle($name) {
@@ -28,6 +34,10 @@ class MWClient {
   public function __construct($api, $username, $password, $config) {
     $this->_api = $api;
     $this->_config = $config;
+
+    if($password == '')
+    	return;
+    	
     $login = $this->request('login', array(
       'lgname' => $username,
       'lgpassword' => $password
@@ -78,6 +88,14 @@ class MWClient {
 
     $json = curl_exec($ch);
     return json_decode($json);
+  }
+
+  public function getNamespaces() {
+    $result = $this->request('query', array(
+      'meta' => 'siteinfo',
+      'siprop' => 'namespaces'
+    ));
+    return $result;
   }
 
   public function getPage($revID) {
