@@ -35,25 +35,39 @@ foreach($config as $domain=>$c) {
   if(!file_exists($c['local'].'images/'))
     mkdir($c['local'].'images/');
 
-/*
-  $files = $mw->request('query', array('list'=>'allimages', 'ailimit'=>5000));
-  foreach($files->query->allimages as $file) {
-      echo "Downloading ".$file->name."\n";
-      $filename = $c['local'].'images/'.$file->name;
-      $fp = fopen($filename, 'w+');
-      $ch = curl_init($file->url);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-      curl_setopt($ch, CURLOPT_FILE, $fp);
-      curl_exec($ch);
-      curl_close($ch);
-      fclose($fp);
-      touch($filename, strtotime($file->timestamp), strtotime($file->timestamp));
-      $db->set($domain, 'images/' . $file->name . ' Timestamp', strtotime($file->timestamp));
-      $i++;
-      if($i % 10 == 0)
-        $db->write();
+
+  $continue = true;
+  $from = false;
+  while($continue == true) {
+      $opts = array('list'=>'allimages', 'ailimit'=>500);
+      if($from) {
+	      $opts['aifrom'] = $from;
+      }
+	  $files = $mw->request('query', $opts);
+	  foreach($files->query->allimages as $file) {
+	      echo "Downloading ".$file->name."\n";
+	      $filename = $c['local'].'images/'.$file->name;
+	      $fp = fopen($filename, 'w+');
+	      $ch = curl_init($file->url);
+	      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	      curl_setopt($ch, CURLOPT_FILE, $fp);
+	      curl_exec($ch);
+	      curl_close($ch);
+	      fclose($fp);
+	      touch($filename, strtotime($file->timestamp), strtotime($file->timestamp));
+	      $db->set($domain, 'images/' . $file->name . ' Timestamp', strtotime($file->timestamp));
+	      $i++;
+	      if($i % 10 == 0)
+	        $db->write();
+	  }
+
+	  if(property_exists($files, 'query-continue')) {
+		  $from = $pages->{'query-continue'}->allimages->aifrom;
+		  echo "\n";
+	  } else {
+		  $continue = false;
+	  }
   }
-*/
 
   foreach($c['namespaces'] as $namespace => $nsid) {
 	  echo $namespace . "\n";
@@ -75,7 +89,7 @@ foreach($config as $domain=>$c) {
 	      
 		  $pages = $mw->request('query', $opts);
 		  foreach($pages->query->allpages as $page) {
-		    $filename = $c['local'] . pageTitleToFilename($page->title) . '.txt';
+		    $filename = $c['local'] . pageTitleToFilename($page->title, $namespace) . '.txt';
 		    echo $filename . "\n";
     
 			download_page($page->title, $filename, $domain, $mw);
@@ -110,7 +124,7 @@ foreach($config as $domain=>$c) {
 	      
 		  $pages = $mw->request('query', $opts);
 		  foreach($pages->query->allpages as $page) {
-		    $filename = $c['local'] . pageTitleToFilename($page->title) . '.txt';
+		    $filename = $c['local'] . pageTitleToFilename($page->title, $namespace) . '.txt';
 		    
 		    // If there is not already a file with the same case-insensitive name, download the redirect
 		    // This means redirects won't be downloaded if they are the same name as a page
