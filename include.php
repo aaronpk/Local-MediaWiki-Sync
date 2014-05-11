@@ -21,8 +21,60 @@ function pageTitleToFilename($title, $namespace=false) {
   return $name;
 }
 
+function pageTitleToURL($s) {
+	// Copied mostly from Mediawiki's includes/GlobalFunctions.php file
+	static $needle;
+	if ( is_null( $needle ) ) {
+		$needle = array( '%3B', '%40', '%24', '%21', '%2A', '%28', '%29', '%2C', '%2F' );
+	}
+
+	$s = urlencode( str_replace(' ','_',$s) );
+	$s = str_ireplace(
+		$needle,
+		array( ';', '@', '$', '!', '*', '(', ')', ',', '/', ':' ),
+		$s
+	);
+
+	return $s;
+}
+
 function filenameToPageTitle($name) {
   return urldecode(str_replace(array(' ','--'), array(' ','/'), $name));
+}
+
+
+function download_page($title, $filename, $url, $domain, $mw) {
+    $response = $mw->request('query', array('prop'=>'info', 'titles'=>$title));
+    $pages = $response->query->pages;
+    $info = get_object_vars($pages);
+    $info = array_pop($info);
+
+    if(property_exists($info, 'missing')) {
+	    unlink($filename);
+	    return -1;
+    } else {
+	    $wikitext = $mw->getPage($info->lastrevid);
+	    
+	    if(!file_exists(dirname($filename)))
+	      mkdir(dirname($filename));
+
+		$fp = fopen($filename, 'w');
+		fputs($fp, $url."\n\n");
+	    fputs($fp, $wikitext."\n");
+	    fclose($fp);
+    
+	    touch($filename, strtotime($info->touched), strtotime($info->touched));
+	    return 1;
+    }
+}
+
+
+function last_synced_date() {
+	return file_get_contents('date.txt');
+}
+
+function set_last_synced_date() {
+	file_put_contents('date.txt', date('YmdHis'));
 }
 
 
@@ -143,15 +195,14 @@ class MWClient {
     return $code;
   }
   
-  public function getRecentChanges() {
-    $ch = curl_init();
-    $cwd = dirname(__FILE__);
-    curl_setopt($ch, CURLOPT_COOKIEFILE, $cwd . '/cookies.txt');
-    curl_setopt($ch, CURLOPT_COOKIEJAR, $cwd . '/cookies.txt');
-    curl_setopt($ch, CURLOPT_URL, $this->_config['root'] . '?title=Special:RecentChanges&feed=atom');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    $this->_addAuth($ch);
-    return curl_exec($ch);
+  public function getRecentChanges($sinceDate=false) {
+    $opts = array(
+      'list' => 'recentchanges',
+      'rclimit' => 500,
+    );
+    if($sinceDate)
+      $opts['rcend'] = $sinceDate;
+    return $this->request('query', $opts);
   }
   
   private function _addAuth(&$ch) {
