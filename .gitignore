@@ -21,4 +21,5 @@ config.php
 db.json
 cookies.txt
 log.txt
+date.txt
 
