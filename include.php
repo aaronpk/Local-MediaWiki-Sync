@@ -73,11 +73,11 @@ function download_page($title, $filename, $url, $domain, $mw) {
 
 
 function last_synced_date() {
-	return file_get_contents('date.txt');
+	return file_get_contents('.syncdate');
 }
 
 function set_last_synced_date() {
-	file_put_contents('date.txt', date('YmdHis'));
+	file_put_contents('.syncdate', date('YmdHis'));
 }
 
 
@@ -202,9 +202,11 @@ class MWClient {
     $opts = array(
       'list' => 'recentchanges',
       'rclimit' => 500,
+      'rcdir' => 'newer',
+      'rcprop' => 'user|comment|title|timestamp'
     );
     if($sinceDate)
-      $opts['rcend'] = $sinceDate;
+      $opts['rcstart'] = $sinceDate;
     return $this->request('query', $opts);
   }
   

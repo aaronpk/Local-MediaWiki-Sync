@@ -13,6 +13,7 @@ $config['example.com'] = array(
   'baseurl' => 'http://example.com/',
   'root' => 'http://example.com/wiki/index.php',
   'api' => 'http://example.com/wiki/api.php',
-  'local' => '/web/sites/example.com/backup/data/'
+  'local' => '/web/sites/example.com/backup/data/',
+  'gitremotes' => ['origin','aaronpk']
 );
 
