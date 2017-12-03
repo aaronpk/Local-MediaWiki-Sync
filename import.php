@@ -16,26 +16,25 @@ foreach($config as $domain=>$c) {
   if(!file_exists($c['local'].'images/'))
     mkdir($c['local'].'images/');
 
-
   $continue = true;
   $from = false;
   while($continue == true) {
-      $opts = array('list'=>'allimages', 'ailimit'=>500);
-      if($from) {
-	      $opts['aifrom'] = $from;
-      }
+    $opts = array('list'=>'allimages', 'ailimit'=>500);
+    if($from) {
+      $opts['aifrom'] = $from;
+    }
 	  $files = $mw->request('query', $opts);
 	  foreach($files->query->allimages as $file) {
-	      echo "Downloading ".$file->name."\n";
-	      $filename = $c['local'].'images/'.$file->name;
-	      $fp = fopen($filename, 'w+');
-	      $ch = curl_init($file->url);
-	      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-	      curl_setopt($ch, CURLOPT_FILE, $fp);
-	      curl_exec($ch);
-	      curl_close($ch);
-	      fclose($fp);
-	      touch($filename, strtotime($file->timestamp), strtotime($file->timestamp));
+      echo "Downloading ".$file->name."\n";
+      $filename = $c['local'].'images/'.$file->name;
+      $fp = fopen($filename, 'w+');
+      $ch = curl_init($file->url);
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+      curl_setopt($ch, CURLOPT_FILE, $fp);
+      curl_exec($ch);
+      curl_close($ch);
+      fclose($fp);
+      touch($filename, strtotime($file->timestamp), strtotime($file->timestamp));
 	  }
 
 	  if(property_exists($files, 'query-continue')) {
@@ -54,23 +53,25 @@ foreach($config as $domain=>$c) {
 	  $continue = true;
 	  $from = false;
 	  while($continue == true) {
-	      $opts = array(
-	        'list' => 'allpages', 
-	        'aplimit' => 500, 
-	        'apfilterredir' => 'nonredirects',
-	        'apnamespace' => $nsid
-	      );
-	      if($from) {
-		      $opts['apfrom'] = $from;
-	      }
+      $opts = array(
+        'list' => 'allpages', 
+        'aplimit' => 500, 
+        'apfilterredir' => 'nonredirects',
+        'apnamespace' => $nsid
+      );
+      if($from) {
+	      $opts['apfrom'] = $from;
+      }
 	      
 		  $pages = $mw->request('query', $opts);
 		  foreach($pages->query->allpages as $page) {
 		    $filename = $c['local'] . pageTitleToFilename($page->title, $namespace) . '.txt';
-		    echo $filename . "\n";
-			$url = $c['baseurl'] . pageTitleToURL($page->title);
-			download_page($page->title, $filename, $url, $domain, $mw);
-			$files_seen[] = strtolower($filename);
+		    if(!file_exists($filename)) {
+  		    echo $filename . "\n";
+    			$url = $c['baseurl'] . pageTitleToURL($page->title);
+    			download_page($page->title, $filename, $url, $domain, $mw);
+    			$files_seen[] = strtolower($filename);
+  			}
 		  }
 		  
 		  if(property_exists($pages, 'query-continue')) {
@@ -80,20 +81,20 @@ foreach($config as $domain=>$c) {
 			  $continue = false;
 		  }
 	  }
-	  
+
 	  // now find all the redirect pages
 	  $continue = true;
 	  $from = false;
 	  while($continue == true) {
-	      $opts = array(
-	        'list' => 'allpages', 
-	        'aplimit' => 500, 
-	        'apfilterredir' => 'redirects',
-	        'apnamespace' => $nsid
-	      );
-	      if($from) {
-		      $opts['apfrom'] = $from;
-	      }
+      $opts = array(
+        'list' => 'allpages', 
+        'aplimit' => 500, 
+        'apfilterredir' => 'redirects',
+        'apnamespace' => $nsid
+      );
+      if($from) {
+	      $opts['apfrom'] = $from;
+      }
 	      
 		  $pages = $mw->request('query', $opts);
 		  foreach($pages->query->allpages as $page) {
@@ -103,11 +104,11 @@ foreach($config as $domain=>$c) {
 		    // This means redirects won't be downloaded if they are the same name as a page
 		    if(!in_array(strtolower($filename), $files_seen)) {
 			    echo $filename . "\n";
-				$url = $c['baseurl'] . pageTitleToURL($page->title);
-				download_page($page->title, $filename, $url, $domain, $mw);
-				$files_seen[] = strtolower($filename);
-			}
-	      }
+  				$url = $c['baseurl'] . pageTitleToURL($page->title);
+  				download_page($page->title, $filename, $url, $domain, $mw);
+  				$files_seen[] = strtolower($filename);
+  			}
+      }
 	
 		  if(property_exists($pages, 'query-continue')) {
 			  $from = $pages->{'query-continue'}->allpages->apfrom;
