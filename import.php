@@ -5,6 +5,9 @@ include('config.php');
 include('include.php');
 
 
+// Warning: This code has not been tested in a while!
+
+
 foreach($config as $domain=>$c) {
   $mw = logInToMediaWiki($domain);
   
@@ -36,7 +39,7 @@ foreach($config as $domain=>$c) {
 	  }
 
 	  if(property_exists($files, 'query-continue')) {
-		  $from = $pages->{'query-continue'}->allimages->aifrom;
+		  $from = $files->{'query-continue'}->allimages->aifrom;
 		  echo "\n";
 	  } else {
 		  $continue = false;
@@ -65,7 +68,7 @@ foreach($config as $domain=>$c) {
 		  foreach($pages->query->allpages as $page) {
 		    $filename = $c['local'] . pageTitleToFilename($page->title, $namespace) . '.txt';
 		    echo $filename . "\n";
-			$url = 'http://indiewebcamp.com/' . pageTitleToURL($page->title);
+			$url = $c['baseurl'] . pageTitleToURL($page->title);
 			download_page($page->title, $filename, $url, $domain, $mw);
 			$files_seen[] = strtolower($filename);
 		  }
@@ -100,7 +103,7 @@ foreach($config as $domain=>$c) {
 		    // This means redirects won't be downloaded if they are the same name as a page
 		    if(!in_array(strtolower($filename), $files_seen)) {
 			    echo $filename . "\n";
-				$url = 'http://indiewebcamp.com/' . pageTitleToURL($page->title);
+				$url = $c['baseurl'] . pageTitleToURL($page->title);
 				download_page($page->title, $filename, $url, $domain, $mw);
 				$files_seen[] = strtolower($filename);
 			}

@@ -36,12 +36,12 @@ foreach($config as $wikiDomain=>$wikiConfig) {
     if(array_key_exists($ns, $namespaces)) {
 	    $filename = $wikiConfig['local'] . pageTitleToFilename($title, $namespaces[$ns]) . '.txt';
 	    echo $filename . "\n";
-		$url = 'http://indiewebcamp.com/' . pageTitleToURL($title);
-		$result = download_page($title, $filename, $url, $wikiDomain, $mw);
-		if($result == -1) {
-			echo "\tdeleted\n";
-		}
-	}
+  		$url = $wikiConfig['baseurl'] . pageTitleToURL($title);
+  		$result = download_page($title, $filename, $url, $wikiDomain, $mw);
+  		if($result == -1) {
+  			echo "\tdeleted\n";
+  		}
+  	}
   }
   
 } // foreach wiki

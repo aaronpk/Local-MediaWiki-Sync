@@ -18,6 +18,9 @@ function pageTitleToFilename($title, $namespace=false) {
   if($namespace) {
 	  $name = str_replace($namespace.'%3A', $namespace.'/', $name);
   }
+  if(preg_match('/[a-zA-Z]/', ($c=substr($name, 0, 1)))) {
+    $name = $c . '/' . $name;
+  }
   return $name;
 }
 
@@ -42,7 +45,6 @@ function filenameToPageTitle($name) {
   return urldecode(str_replace(array(' ','--'), array(' ','/'), $name));
 }
 
-
 function download_page($title, $filename, $url, $domain, $mw) {
     $response = $mw->request('query', array('prop'=>'info', 'titles'=>$title));
     $pages = $response->query->pages;
@@ -55,11 +57,12 @@ function download_page($title, $filename, $url, $domain, $mw) {
     } else {
 	    $wikitext = $mw->getPage($info->lastrevid);
 	    
-	    if(!file_exists(dirname($filename)))
-	      mkdir(dirname($filename));
+    if(!file_exists(dirname($filename)))
+      mkdir(dirname($filename));
 
 		$fp = fopen($filename, 'w');
 		fputs($fp, $url."\n\n");
+		
 	    fputs($fp, $wikitext."\n");
 	    fclose($fp);
     

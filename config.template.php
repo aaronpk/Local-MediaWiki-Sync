@@ -1,13 +1,18 @@
 <?php
 
 $config = array();
-$dropboxPath = '/Users/aaronpk/Dropbox/NotationalVelocity/';
-$uploadPath = '/Users/aaronpk/Dropbox/Wiki/'; # Files go in $uploadPath / example.com /
 
 $config['example.com'] = array(
   'username' => 'user',
   'password' => 'pass3333',
+  'namespaces' => array(
+    '' => 0,
+    'User' => 2,
+    'Template' => 10
+  ),
+  'baseurl' => 'http://example.com/',
   'root' => 'http://example.com/wiki/index.php',
-  'api' => 'http://example.com/wiki/api.php'
+  'api' => 'http://example.com/wiki/api.php',
+  'local' => '/web/sites/example.com/backup/data/'
 );
 
