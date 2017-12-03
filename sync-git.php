@@ -1,6 +1,5 @@
 <?php
 chdir(dirname(__FILE__));
-
 include('config.php');
 include('include.php');
 
@@ -11,6 +10,7 @@ include('include.php');
   	Any files that return 404 will be deleted on disk
 */
 
+chdir(dirname(__FILE__));
 $since = last_synced_date();
 
 foreach($config as $wikiDomain=>$wikiConfig) {
@@ -57,4 +57,5 @@ foreach($config as $wikiDomain=>$wikiConfig) {
   }
 } // foreach wiki
 
+chdir(dirname(__FILE__));
 set_last_synced_date();
