@@ -5,8 +5,6 @@ include('config.php');
 include('include.php');
 
 
-// Warning: This code has not been tested in a while!
-
 
 foreach($config as $domain=>$c) {
   $mw = logInToMediaWiki($domain);
@@ -27,14 +25,16 @@ foreach($config as $domain=>$c) {
 	  foreach($files->query->allimages as $file) {
       echo "Downloading ".$file->name."\n";
       $filename = $c['local'].'images/'.$file->name;
-      $fp = fopen($filename, 'w+');
-      $ch = curl_init($file->url);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-      curl_setopt($ch, CURLOPT_FILE, $fp);
-      curl_exec($ch);
-      curl_close($ch);
-      fclose($fp);
-      touch($filename, strtotime($file->timestamp), strtotime($file->timestamp));
+      if(!file_exists($filename)) {
+        $fp = fopen($filename, 'w+');
+        $ch = curl_init($file->url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($ch, CURLOPT_FILE, $fp);
+        curl_exec($ch);
+        curl_close($ch);
+        fclose($fp);
+        touch($filename, strtotime($file->timestamp), strtotime($file->timestamp));
+      }
 	  }
 
 	  if(property_exists($files, 'query-continue')) {
@@ -102,12 +102,12 @@ foreach($config as $domain=>$c) {
 		    
 		    // If there is not already a file with the same case-insensitive name, download the redirect
 		    // This means redirects won't be downloaded if they are the same name as a page
-		    if(!in_array(strtolower($filename), $files_seen)) {
+		    #if(!in_array(strtolower($filename), $files_seen)) {
 			    echo $filename . "\n";
   				$url = $c['baseurl'] . pageTitleToURL($page->title);
   				download_page($page->title, $filename, $url, $domain, $mw);
   				$files_seen[] = strtolower($filename);
-  			}
+  			#}
       }
 	
 		  if(property_exists($pages, 'query-continue')) {
