@@ -43,7 +43,7 @@ foreach($config as $wikiDomain=>$wikiConfig) {
       		echo $cmd."\n";
           echo shell_exec($cmd);
     		}
-        $cmd = '/usr/bin/git -c '.escapeshellarg('user.name='.$change->user).' commit -m '.escapeshellarg($change->comment);
+        $cmd = '/usr/bin/git -c '.escapeshellarg('user.name='.$change->user).' -c user.email='.$wikiConfig['gitemail'].' commit --allow-empty-message -m '.escapeshellarg($change->comment);
     		echo $cmd."\n";
         echo shell_exec($cmd);
       }
