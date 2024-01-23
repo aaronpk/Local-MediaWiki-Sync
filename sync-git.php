@@ -51,7 +51,7 @@ foreach($config as $wikiDomain=>$wikiConfig) {
   }
   
   foreach($wikiConfig['gitremotes'] as $remote) {
-    $cmd = '/usr/bin/git push '.$remote.' master';
+    $cmd = '/usr/bin/git push '.$remote.' main';
     echo $cmd."\n";
     echo shell_exec($cmd);
   }
