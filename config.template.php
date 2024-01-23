@@ -14,6 +14,7 @@ $config['example.com'] = array(
   'root' => 'http://example.com/wiki/index.php',
   'api' => 'http://example.com/wiki/api.php',
   'local' => '/web/sites/example.com/backup/data/',
-  'gitremotes' => ['origin','aaronpk']
+  'gitremotes' => ['origin'],
+  'gitemail' => 'user@example.com',
 );
 
